@@ -58,10 +58,10 @@ public class AirportControllerIT {
         String response = createAirport(airportRequest);
 
         Long id = objectMapper.readTree(response).get("id").asLong();
-        mockMvc.perform(delete("/api/airport/" + id))
+        mockMvc.perform(delete("/api/airports/" + id))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/airport/" + id))
+        mockMvc.perform(get("/api/airports/" + id))
                 .andExpect(status().isNotFound());
     }
 
@@ -78,9 +78,12 @@ public class AirportControllerIT {
 
         airportRequest.setName("Aeropuerto Santiago de Chile");
 
-        mockMvc.perform(put("/api/airport/" + id)
-        .contentType(MediaType.APPLICATION_JSON)
-        )
+        mockMvc.perform(put("/api/airports/" + id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(airportRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Aeropuerto Santiago de Chile"));
+
     }
 
     private String createAirport(AirportRequest airportRequest) throws Exception {
