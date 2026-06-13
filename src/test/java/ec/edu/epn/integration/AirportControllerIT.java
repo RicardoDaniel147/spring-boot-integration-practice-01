@@ -6,6 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -135,6 +136,71 @@ public class AirportControllerIT {
         mockMvc.perform(get("/api/airports"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
+
+    }
+
+    @Test
+    @DisplayName("Buscar por ID y verificar los datos")
+    void shouldFindAirportById() throws Exception {
+        AirportRequest airportRequest = new AirportRequest();
+        airportRequest.setName("Aeropuerto de Quito");
+        airportRequest.setCity("Quito");
+        airportRequest.setCode("UIO");
+        airportRequest.setCountry("Ecuador");
+
+        String response = createAirport(airportRequest);
+
+        Long id = objectMapper.readTree(response).get("id").asLong();
+
+        mockMvc.perform(get("/api/airports/" + id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.name").value("Aeropuerto de Quito"))
+                .andExpect(jsonPath("$.city").value("Quito"))
+                .andExpect(jsonPath("$.code").value("UIO"))
+                .andExpect(jsonPath("$.country").value("Ecuador"));
+    }
+
+    @Test
+    @DisplayName("Buscar por código IATA")
+    void shouldFindAirportByCode() throws Exception {
+        AirportRequest airportRequest = new AirportRequest();
+        airportRequest.setName("Aeropuerto de Guayaquil");
+        airportRequest.setCity("Guayaquil");
+        airportRequest.setCode("GUA");
+        airportRequest.setCountry("Ecuador");
+
+        createAirport(airportRequest);
+
+        mockMvc.perform(get("/api/airports/code/GUA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("GUA"))
+                .andExpect(jsonPath("$.city").value("Guayaquil"))
+                .andExpect(jsonPath("$.country").value("Ecuador"));
+    }
+
+    // isNotFound()
+    @Test
+    @DisplayName("")
+    void shouldReturn404WhenAirportNotFound() throws Exception {
+        mockMvc.perform(get("/api/airports/99999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Enviar datos inválidos y verificar HTTP 400")
+    void shouldRejectInvalidAirportRequest() throws JsonProcessingException, Exception {
+        AirportRequest airportRequest = new AirportRequest();
+
+        airportRequest.setName("");
+        airportRequest.setCity("");
+        airportRequest.setCode("AB");
+        airportRequest.setCountry("");
+
+        mockMvc.perform(post("/api/airports")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(airportRequest)))
+                .andExpect(status().isBadRequest());
 
     }
 
