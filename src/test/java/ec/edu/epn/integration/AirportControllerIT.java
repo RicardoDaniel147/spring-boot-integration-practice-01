@@ -179,9 +179,8 @@ public class AirportControllerIT {
                 .andExpect(jsonPath("$.country").value("Ecuador"));
     }
 
-    // isNotFound()
     @Test
-    @DisplayName("")
+    @DisplayName("Buscar un ID inexistente -> HTTP 404")
     void shouldReturn404WhenAirportNotFound() throws Exception {
         mockMvc.perform(get("/api/airports/99999"))
                 .andExpect(status().isNotFound());
